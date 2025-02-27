@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能插件选择</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #000;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #functionSelector {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        section {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+       .input-group {
+            margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+       .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+       .info-message {
+            color: orange;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+       .results {
+            margin-top: 20px;
+        }
+       .result-item {
+            margin-bottom: 20px;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">选择功能</h1>
+    <button id="selectFunctionButton">选择功能</button>
+    <div id="functionSelector">
+        <button id="iconSearchOption">批量icon检索</button>
+        <button id="iosLoginOption">IOS一键上号</button>
+        <button id="dumpProcessingOption">Dump内容修正处理工具</button>
+    </div>
+    <!-- 批量icon检索功能区域 -->
+    <section id="icon-search">
+        <h1>批量icon检索</h1>
+        <div class="input-group">
+            <textarea id="content-input" placeholder="请输入多个数字组合，用逗号、换行或空格分隔"></textarea>
+        </div>
+        <button id="process-button">开始检索</button>
+        <div class="error-message" id="error-message"></div>
+        <div class="info-message" id="info-message"></div>
+        <div class="results" id="results"></div>
+        <script>
+            const processButton = document.getElementById('process-button');
+            const contentInput = document.getElementById('content-input');
+            const errorMessage = document.getElementById('error-message');
+            const infoMessage = document.getElementById('info-message');
+            const results = document.getElementById('results');
+            processButton.addEventListener('click', () => {
+                errorMessage.textContent = '';
+                infoMessage.textContent = '';
+                results.innerHTML = '';
+                const inputText = contentInput.value.trim();
+                if (!inputText) {
+                    errorMessage.textContent = '请输入内容！';
+                    return;
+                }
+                const lines = inputText.split(/[\n, ]+/).filter(line => line.trim()!== '');
+                if (lines.length === 0) {
+                    errorMessage.textContent = '输入内容无有效数字组合！';
+                    return;
+                }
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    const imageUrl = `https://imgcdn.gp.qq.com/images/itemicon/v15/${trimmedLine}.png`;
+                    const resultItem = document.createElement('div');
+                    resultItem.className ='result-item';
+                    const title = document.createElement('p');
+                    title.textContent = `输入值: ${trimmedLine}`;
+                    resultItem.appendChild(title);
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = `生成的图片 ${trimmedLine}`;
+                    resultItem.appendChild(img);
+                    results.appendChild(resultItem);
+                });
+                infoMessage.textContent = `共处理了 ${lines.length} 个输入值。`;
+            });
+        </script>
+    </section>
+    <!-- IOS一键上号功能区域 -->
+    <section id="ios-login">
+        <h1>IOS一键上号</h1>
+        <form>
+            <div class="input-group">
+                <label for="url">数据号URL:</label>
+                <textarea id="url" name="url" required placeholder="请输入完整数据号URL例如：_Callback({xxxxx});"></textarea>
+            </div>
+            <button type="button" id="submitButton">上号</button>
+            <div class="input-group">
+                <label for="convertedContent">转换后的内容:</label>
+                <textarea id="convertedContent" readonly></textarea>
+            </div>
+            <button type="button" id="copyButton">复制</button>
+            <button type="button" id="convertButton">转换</button>
+            <div class="error-message" id="message"></div>
+            <script>
+                const submitButton = document.getElementById('submitButton');
+                const copyButton = document.getElementById('copyButton');
+                const convertButton = document.getElementById('convertButton');
+                const urlInput = document.getElementById('url');
+                const convertedContent = document.getElementById('convertedContent');
+                const messageDiv = document.getElementById('message');
+
+                submitButton.addEventListener('click', () => {
+                    messageDiv.textContent = '';
+                    const url = urlInput.value;
+                    const accessToken = url.split('access_token=')[1]?.split('&')[0];
+                    const openid = url.split('openid=')[1]?.split('&')[0];
+                    const payToken = url.split('pay_token=')[1]?.split('&')[0];
+                    if (!accessToken ||!openid ||!payToken) {
+                        messageDiv.textContent = "URL中缺少必要的参数。";
+                        return;
+                    }
+                    // 此处fetch请求代码暂未完整，需根据实际后端接口调整
+                    fetch('/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `access=${accessToken}&openid=${openid}&pay=${payToken}`
+                    })
+                   .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            return response.json().then(data => {
+                                messageDiv.textContent = data.message || '网络异常，请稍后重试';
+                                throw new Error(`Network response was not ok: ${response.statusText}`);
+                            });
+                        }
+                    })
+                   .then(data => {
+                        if (data.url) {
+                            messageDiv.textContent = '上号成功，请允许打开游戏!!';
+                            // 此处window.location.href = data.url; 需确认安全性
+                        } else {
+                            messageDiv.textContent = data.message || '上号失败，请检查数据号URL是否正确！！';
+                        }
+                    })
+                   .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+
+                convertButton.addEventListener('click', () => {
+                    const url = urlInput.value;
+                    const accessToken = url.split('access_token=')[1]?.split('&')[0];
+                    const openid = url.split('openid=')[1]?.split('&')[0];
+                    const payToken = url.split('pay_token=')[1]?.split('&')[0];
+                    if (!accessToken ||!openid ||!payToken) {
+                        convertedContent.textContent = "URL中缺少必要的参数。";
+                        return;
+                    }
+                    // 此处fetch请求代码暂未完整，需根据实际后端接口调整
+                    fetch('/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `access=${accessToken}&openid=${openid}&pay=${payToken}`
+                    })
+                   .then(response => response.json())
+                   .then(data => {
+                        if (data.url) {
+                            convertedContent.textContent = data.url;
+                        } else {
+                            convertedContent.textContent = data.message || '转换失败。';
+                        }
+                    })
+                   .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+
+                copyButton.addEventListener('click', () => {
+                    const content = convertedContent.textContent;
+                    if (content) {
+                        navigator.clipboard.writeText(content).then(() => {
+                            alert('转换后的内容已复制到剪贴板！');
+                        }).catch(err => {
+                            console.error("复制失败:", err);
+                            alert("复制失败，请手动选择文本复制");
+                        });
+                    } else {
+                        alert("没有可复制的内容");
+                    }
+                });
+            </script>
+        </form>
+    </section>
+    <!-- Dump内容修正处理工具功能区域 -->
+    <section id="dump-processing">
+        <h1>Dump内容修正处理工具</h1>
+        <div class="input-group">
+            <input type="file" id="fileInput" accept=".txt">
+        </div>
+        <button id="processDumpButton">处理文件</button>
+        <div class="input-group">
+            <h3>原始内容</h3>
+            <textarea id="originalText" readonly></textarea>
+        </div>
+        <div class="input-group">
+            <h3>处理后的内容</h3>
+            <textarea id="processedText" readonly></textarea>
+        </div>
+        <button id="downloadButton" style="display: none;">下载文件</button>
+        <button id="copyDumpButton" style="display: none;">一键复制</button>
+        <script>
+            let processedContent = '';
+            const processDumpButton = document.getElementById('processDumpButton');
+            const fileInput = document.getElementById('fileInput');
+            const originalText = document.getElementById('originalText');
+            const processedText = document.getElementById('processedText');
+            const downloadButton = document.getElementById('downloadButton');
+            const copyDumpButton = document.getElementById('copyDumpButton');
+
+            processDumpButton.addEventListener('click', () => {
+                if (!fileInput.files.length) {
+                    alert("请选择一个TXT文件");
+                    return;
+                }
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const lines = event.target.result.split(/\r?\n/);
+                    originalText.textContent = lines.join("\n");
+                    const processedLines = lines.map(line => {
+                        const match = line.match(/ID--(\d+); ID2--(\d+); offset--0x[0-9A-Fa-f]+ name--(.+); describe--(.+);/);
+                        if (match) {
+                            return `${match[3]} -- ${match[1]} -- ${match[2]}`;
+                        }
+                        return '';
+                    }).filter(line => line!== '');
+                    processedContent = processedLines.join('\n');
+                    processedText.textContent = processedContent;
+                    downloadButton.style.display = "block";
+                    copyDumpButton.style.display = "block";
+                };
+                reader.readAsText(file);
+            });
+
+            downloadButton.addEventListener('click', () => {
+                if (!processedContent) {
+                    alert("没有可下载的内容");
+                    return;
+                }
+                const date = new Date();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateStr = month + day;
+                const fileName = `UE4Dump${dateStr}.txt`;
+                const blob = new Blob([processedContent], { type: "text/plain" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            copyDumpButton.addEventListener('click', () => {
+                if (!processedContent) {
+                    alert("没有可复制的内容");
+                    return;
+                }
+                navigator.clipboard.writeText(processedContent).then(() => {
+                    alert("内容已复制到剪贴板！");
+                }).catch(err => {
+                    console.error("复制失败:", err);
+                    alert("复制失败，请手动选择文本复制");
+                });
+            });
+        </script>
+    </section>
+    <script>
+        const selectFunctionButton = document.getElementById('selectFunctionButton');
+        const functionSelector = document.getElementById('functionSelector');
+        const iconSearchOption = document.getElementById('iconSearchOption');
+        const iosLoginOption = document.getElementById('iosLoginOption');
+        const dumpProcessingOption = document.getElementById('dumpProcessingOption');
+        const iconSearchSection = document.getElementById('icon-search');
+        const iosLoginSection = document.getElementById('ios-login');
+        const dumpProcessingSection = document.getElementById('dump-processing');
+        const title = document.getElementById('title');
+
+        selectFunctionButton.addEventListener('click', () => {
+            functionSelector.style.display = 'block';
+        });
+
+        iconSearchOption.addEventListener('click', () => {
+            functionSelector.style.display = 'none';
+            iconSearchSection.style.display = 'block';
+            iosLoginSection.style.display = 'none';
+            dumpProcessingSection.style.display = 'none';
+            title.style.display = 'none';
+        });
+
+        iosLoginOption.addEventListener('click', () => {
+            functionSelector.style.display = 'none';
+            iosLoginSection.style.display = 'block';
+            iconSearchSection.style.display = 'none';
+            dumpProcessingSection.style.display = 'none';
+            title.style.display = 'none';
+        });
+
+        dumpProcessingOption.addEventListener('click', () => {
+            functionSelector.style.display = 'none';
+            dumpProcessingSection.style.display = 'block';
+            iconSearchSection.style.display = 'none';
+            iosLoginSection.style.display = 'none';
+            title.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
